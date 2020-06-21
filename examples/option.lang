@@ -7,17 +7,7 @@
   [:option/some "shiiiit"])
 
 
-(defn id
-  [x]
-  x)
-
-
-(defn apply
-  [f x]
-  (f x))
-
-
 (defn main
   [argv : (Array String)]
   (io/println (option/default ((fn [x] x) val) "fuck"))
-  (io/println (option/default (option/map (fn [x] "shit") val) "fail")))
+  (io/println (option/default (map (fn [x] "shit") val) "fail")))
