@@ -33,24 +33,6 @@
     f
     (recur (.apply f (first args)) (next args))))
 
-(lang
-   (defmodule CGTest.captures)
-   (defn capture_spine [a x y]
-     (fn [b]
-       (fn [c]
-         (fn [d]
-           (fn [e]
-             (fn [f]
-               a))))))
-   (defn app_spine [a x y b c d e f]
-     (capture_spine a x y b c d e f))
-   (defn capture_through [a]
-     (do "one"
-         (fn [b]
-           (do "two"
-               (fn [c]
-                 (do "three"
-                     (fn [d] a))))))))
 (deftest captures
   (lang
    (defmodule CGTest.captures)
