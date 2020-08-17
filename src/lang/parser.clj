@@ -15,3 +15,12 @@
     (if (:ok result)
       (:value result)
       (throw (ex-info "Parsing error" (:error result))))))
+
+(defn parse-string
+  [s]
+  (let [result (kern/parse file s)]
+    (if (:ok result)
+      (:value result)
+      (throw (ex-info "Parsing error" (:error result))))))
+
+

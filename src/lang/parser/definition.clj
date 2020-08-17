@@ -49,7 +49,9 @@
 
 (def ^:private function
   (let [argument (bind [symbol reference/variable
-                        type (optional (>> (sym \:) type/expr))]
+                        type (optional (>> (<|> (<:> (>> (sym \:) (sym \$)))
+                                                (sym \:))
+                                           type/expr))]
                    (return
                      (if type
                        (assoc symbol :type type)

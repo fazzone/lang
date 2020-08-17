@@ -109,17 +109,18 @@
 
 (def expr
   (<|>
-    (<:> atom)
-    (<:> lambda)
-    (<:> match)
-    (<:> access)
-    application
-    variant
-    record
-    symbol
-    quote
-    (<:> unquote)
-    unquote-splicing))
+   (<:> atom)
+   (<:> lambda)
+   (<:> match)
+   (<:> access)
+   (<:> sequence)
+   application
+   variant
+   record
+   symbol
+   quote
+   (<:> unquote)
+   unquote-splicing))
 
 (comment
 

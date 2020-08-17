@@ -850,12 +850,12 @@
 (comment
 
   (-> "examples/option.lang"
-    (lang.compiler/run #{:parser :name-resolution :dependency-analyzer :type-checker :code-generator})
-    :code-generator/bytecode)
+      (lang.compiler/run :until :code-generator)
+      :code-generator/bytecode)
 
   (-> "std/lang/option.lang"
-    (lang.compiler/run #{:parser :name-resolution :dependency-analyzer :type-checker :code-generator})
-    :code-generator/bytecode)
+      (lang.compiler/run #{:parser :name-resolution :dependency-analyzer :type-checker :code-generator})
+      :code-generator/bytecode)
 
   (throw (ex-info "foo" {}))
 
@@ -864,3 +864,28 @@
   (com.gfredericks.debug-repl/unbreak!)
 
   )
+
+
+(comment
+  ;; do this once
+  (let [olf (clojure.java.io/file "out/lang/function/")]
+    (doseq [f (file-seq olf) ]
+      (when (.endsWith (str f) ".class")
+        (prn f)
+        (let [classname (.replaceAll  (.getName f) ".class" "")
+              arr (byte-array (.length f))
+              loader (ClassLoader/getSystemClassLoader)
+              defineclass (doto (.getDeclaredMethod ClassLoader "defineClass"
+                                                    (into-array [String (Class/forName "[B") Integer/TYPE Integer/TYPE]))
+                            (.setAccessible true))]
+          (with-open [in (java.io.FileInputStream. f)]
+            (.read in arr))
+          (try
+            (.invoke defineclass loader
+                     ^"[Ljava.lang.Object;"
+                     (into-array Object
+                                 [(str "lang.function." classname) arr
+                                  (int 0)
+                                  (int (count arr))]))
+            (catch Exception e
+              (prn 'cant-define f))))))))
