@@ -88,8 +88,8 @@
         _ (when-not name (throw (ex-info "Name is required!" {})))
         java-name (string/replace name "/" ".")
         class-bytes (jnsn/create-class cc)]
-    #_(io/copy class-bytes (io/file (str java-name ".class")))
-    #_(prn 'Defined java-name 'wrote (str java-name ".class"))
+    (io/copy class-bytes (io/file (str java-name ".class")))
+    (prn 'Defined java-name 'wrote (str java-name ".class"))
     (.defineClass ^DynamicClassLoader (:class-loader state) java-name class-bytes nil)
     state))
 
@@ -145,7 +145,7 @@
                ("J" "D") 2
                1)]
     (deliver p idx)
-    (update-context state :method update :local-var-index inc)))
+    (update-context state :method update :local-var-index + size)))
 
 (defn emit
   ([state v] (update-context state :method #(update % :emit into v)))
@@ -285,6 +285,12 @@
     "L" (subs s 1 (dec (count s)))
     (throw (ex-info "Expected reference type" {:type s}))))
 
+(defn ref-type?
+  [s]
+  (case (subs s 0 1)
+    "L" true
+    false))
+
 (defn type->class-name
   [state {:keys [ast/type primitive domain return element fields] :as t}]
   (case type
@@ -389,7 +395,7 @@
      [:dup]
      [:ldc value]
      [:invokespecial "java/math/BigInteger" "<init>" "(Ljava/lang/String;)V" false]]
-
+    
     :string
     [[:ldc value]]
 
@@ -463,12 +469,15 @@
 
 ;; patterns
 
-(defn atom-comparison-insns
-  [atom-type]
+(defn compare-atom-branch-ifne
+  [atom-type label]
   (case atom-type
-    :integer [[:invokevirtual "java/math/BigInteger" "compareTo" "(Ljava/math/BigInteger;)I" false]]
-    :string [[:invokevirtual "java/lang/String" "compareTo" "(Ljava/lang/String;)I" false]]
-    :boolean [[:invokevirtual "java/lang/Boolean" "compareTo" "(Ljava/lang/Boolean;)I" false]]))
+    :integer [[:invokevirtual "java/math/BigInteger" "compareTo" "(Ljava/math/BigInteger;)I" false]
+              [:ifne label]]
+    :string [[:invokevirtual "java/lang/String" "compareTo" "(Ljava/lang/String;)I" false]
+             [:ifne label]]
+    :boolean [[:invokevirtual "java/lang/Boolean" "compareTo" "(Ljava/lang/Boolean;)I" false]
+              [:ifne label]]))
 
 (defn emit-one-pattern
   [state {:keys [type-checker.pattern/type] :as pattern} body-insns me next]
@@ -491,8 +500,7 @@
                [[:label me]]
                (atom-insns atom)
                body-insns
-               (atom-comparison-insns (:atom atom))
-               [[:ifne next]])
+               (compare-atom-branch-ifne (:atom atom) next))
 
          {:ast/pattern :record :fields fields}
          (let [t (type->class-name state (specialize-type type))
@@ -775,8 +783,9 @@
                            :desc field-type})
                (add-binding name field-type [[:getstatic current-class field-name field-type]] {:nocapture true})
                (emit-term (analyze-captures body))
-               (emit [[:checkcast (ref-type->class field-type)]                      
-                      [:putstatic current-class field-name field-type]])))
+               (cond-> (ref-type? field-type)
+                 (emit1 [:checkcast (ref-type->class field-type)]))
+               (emit1 [:putstatic current-class field-name field-type])))
 
          {:ast/definition :type :body body :name name}
          (emit-type state name (specialize-type body))))
@@ -785,4 +794,5 @@
   [module]
   (-> (new-compile-state)
       (emit-toplevel module)))
+
 
