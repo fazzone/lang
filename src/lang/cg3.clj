@@ -140,7 +140,7 @@
   (let [mc (:method (get-context state))
         _ (when-not mc (throw (ex-info "Method context expected!" (get-context state))))
         idx (:local-var-index mc)
-        _ (when-not mc (throw (ex-info "Need to know local-var-index of method!" {:name (:name mc)} )))
+        _ (when-not idx (throw (ex-info "Need to know local-var-index of method!" {:name (:name mc)})))
         size (case var-type
                ("J" "D") 2
                1)]
