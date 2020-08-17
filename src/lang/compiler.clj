@@ -11,10 +11,9 @@
 
 (def lang-home 
   (or
-   (System/getenv "LANG_HOME")
-   "std"
-   #_"/home/tjgr/Dropbox/lang-clj/std"
-   (throw (ex-info "Could not find stdlib" {}))))
+    (System/getenv "LANG_HOME")
+    "/home/tjgr/Dropbox/lang-clj/std"
+    (throw (ex-info "Could not find stdlib" {}))))
 
 (def ^:private default-imports
   (->> [["lang" "core"]

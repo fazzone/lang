@@ -70,7 +70,7 @@
                           (match a
                                  :id s
                                  :opcode (op->sym opcode)
-                                 :int (list 'unchecked-int s)
+                                 :int (list 'int s)
                                  [:array :int] (list 'int-array s)
                                  [:array t] (list 'into-array t s)))
                         (map match-vars args))]
@@ -83,13 +83,11 @@
 (defn build-insn-match-expr*
   ;; build a giant `match` expression which handles all insns
   [mv-expr insn-expr]
-  (list* `match insn-expr
-         (list* '[:push-type _] nil
-                '[:pop-type]  nil
-                (for [[method-sym {:keys [args ops]}] asm-functions-opcodes-map
-                      opcode ops
-                      part (build-match-branch* mv-expr method-sym opcode args)]
-                  part))))
+  `(match ~insn-expr
+          ~@(for [[method-sym {:keys [args ops]}] asm-functions-opcodes-map
+                opcode ops
+                part (build-match-branch* mv-expr method-sym opcode args)]
+            part)))
 
 (comment
   (build-insn-match-expr* 'mv 'insn))
